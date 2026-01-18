@@ -1,0 +1,100 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'core/**'
+      - 'buildSrc/**'
+      - '*.gradle*'
+      - 'gradle/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build extension
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Prepare signing key
+        run: |
+          echo ${{ secrets.SIGNING_KEY }} | base64 -d > signingkey.jks
+
+      - name: Build APK
+        env:
+          ALIAS: ${{ secrets.ALIAS }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew :src:all:dokusho:assembleRelease
+
+      - name: Find APK
+        id: find-apk
+        run: |
+          APK_PATH=$(find . -name "*.apk" -type f | head -1)
+          echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
+          APK_NAME=$(basename "$APK_PATH")
+          echo "apk_name=$APK_NAME" >> $GITHUB_OUTPUT
+
+      - name: Generate extension info
+        run: |
+          mkdir -p repo/apk repo/icon
+          cp ${{ steps.find-apk.outputs.apk_path }} repo/apk/
+          cp src/all/dokusho/res/mipmap-xxxhdpi/ic_launcher.png repo/icon/eu.kanade.tachiyomi.extension.all.dokusho.png || true
+          python3 .github/scripts/generate-index.py
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-repo
+          path: repo/
+
+      - name: Clean up
+        run: rm -f signingkey.jks
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: extension-repo
+          path: repo/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: repo/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

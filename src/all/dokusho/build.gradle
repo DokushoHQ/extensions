@@ -1,0 +1,7 @@
+ext {
+    extName = 'Dokusho'
+    extClass = '.Dokusho'
+    extVersionCode = 1
+}
+
+apply from: "$rootDir/common.gradle"
