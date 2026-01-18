@@ -20,15 +20,14 @@ def parse_apk_info(apk_path):
             {
                 "name": "Dokusho",
                 "lang": "all",
-                "id": "8524619729907384860",  # Generated ID
-                "baseUrl": "",
-                "versionId": 1
+                "id": 8524619729907384860,
+                "baseUrl": ""
             }
         ]
     }
 
-    # Try to extract version from filename
-    match = re.search(r'-v(\d+\.\d+\.\d+)\.apk$', apk_path)
+    # Try to extract version from filename (handles -release suffix)
+    match = re.search(r'-v(\d+\.\d+\.\d+)(?:-release)?\.apk$', apk_path)
     if match:
         info["version"] = match.group(1)
         # Extract version code from version name
