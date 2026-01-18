@@ -23,7 +23,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import uy.kohesive.injekt.injectLazy
 import java.security.MessageDigest
 
 class Dokusho : ConfigurableSource, HttpSource() {
@@ -52,7 +51,11 @@ class Dokusho : ConfigurableSource, HttpSource() {
 
     private val apiKey by lazy { preferences.getString(PREF_API_KEY, "")!! }
 
-    private val json: Json by injectLazy()
+    private val json: Json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        coerceInputValues = true
+    }
 
     override fun headersBuilder() = super.headersBuilder()
         .set("User-Agent", "TachiyomiDokusho/1.0")
@@ -191,7 +194,7 @@ class Dokusho : ConfigurableSource, HttpSource() {
     }
 
     private inline fun <reified T> Response.parseAs(): T = use {
-        json.decodeFromString(body.string())
+        json.decodeFromString<T>(body.string())
     }
 
     companion object {

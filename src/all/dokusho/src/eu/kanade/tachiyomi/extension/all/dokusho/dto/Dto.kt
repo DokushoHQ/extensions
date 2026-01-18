@@ -192,8 +192,6 @@ data class PageDataDto(
     val content: String? = null,
     @SerialName("image_quality")
     val imageQuality: String? = null,
-    @SerialName("metadata_issues")
-    val metadataIssues: List<String>? = null,
     @SerialName("permanently_failed")
     val permanentlyFailed: Boolean = false
 )
