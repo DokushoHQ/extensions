@@ -40,18 +40,6 @@ data class SourceInfoDto(
 )
 
 @Serializable
-data class SerieSourceDto(
-    val id: String,
-    @SerialName("external_id")
-    val externalId: String,
-    @SerialName("is_primary")
-    val isPrimary: Boolean,
-    @SerialName("consecutive_failures")
-    val consecutiveFailures: Int = 0,
-    val source: SourceInfoDto
-)
-
-@Serializable
 data class ChapterCountDto(
     val chapters: Int = 0
 )
@@ -103,7 +91,6 @@ data class SerieDetailResponseDto(
     val genres: List<GenreDto> = emptyList(),
     val authors: List<PersonDto> = emptyList(),
     val artists: List<PersonDto> = emptyList(),
-    val sources: List<SerieSourceDto> = emptyList(),
     @SerialName("_count")
     val count: ChapterCountDto? = null
 ) {
