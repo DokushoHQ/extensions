@@ -3,8 +3,8 @@
 import json
 import os
 import re
-import zipfile
 from pathlib import Path
+
 
 def parse_apk_info(apk_path):
     """Extract extension info from APK manifest."""
@@ -21,13 +21,14 @@ def parse_apk_info(apk_path):
                 "name": "Dokusho",
                 "lang": "all",
                 "id": "8524619729907384860",
-                "baseUrl": ""
+                "baseUrl": "",
+                "versionId": 1,
             }
-        ]
+        ],
     }
 
     # Try to extract version from filename (handles -release suffix)
-    match = re.search(r'-v(\d+\.\d+\.\d+)(?:-release)?\.apk$', apk_path)
+    match = re.search(r"-v(\d+\.\d+\.\d+)(?:-release)?\.apk$", apk_path)
     if match:
         info["version"] = match.group(1)
         # Extract version code from version name
@@ -36,6 +37,7 @@ def parse_apk_info(apk_path):
             info["code"] = int(parts[2])
 
     return info
+
 
 def main():
     repo_dir = Path("repo")
@@ -59,7 +61,7 @@ def main():
     repo_meta = {
         "meta": {
             "name": "Dokusho Extensions",
-            "website": "https://github.com/dokushohq/extensions"
+            "website": "https://github.com/dokushohq/extensions",
         }
     }
     with open(repo_dir / "repo.json", "w") as f:
@@ -115,6 +117,7 @@ def main():
         f.write(html)
 
     print(f"Generated index with {len(extensions)} extension(s)")
+
 
 if __name__ == "__main__":
     main()
