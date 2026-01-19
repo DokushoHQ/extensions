@@ -69,7 +69,6 @@ data class SerieDto(
     val genres: List<GenreDto> = emptyList(),
     val authors: List<PersonDto> = emptyList(),
     val artists: List<PersonDto> = emptyList(),
-    val sources: List<SerieSourceDto> = emptyList(),
     @SerialName("_count")
     val count: ChapterCountDto? = null
 ) {
