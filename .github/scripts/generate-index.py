@@ -20,7 +20,7 @@ def parse_apk_info(apk_path):
             {
                 "name": "Dokusho",
                 "lang": "all",
-                "id": 8524619729907384860,
+                "id": "8524619729907384860",
                 "baseUrl": ""
             }
         ]
