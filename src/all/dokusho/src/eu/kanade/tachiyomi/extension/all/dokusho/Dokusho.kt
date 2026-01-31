@@ -25,7 +25,10 @@ import okhttp3.Request
 import okhttp3.Response
 import java.security.MessageDigest
 
-class Dokusho : ConfigurableSource, HttpSource() {
+abstract class Dokusho(
+    final override val lang: String,
+    private val apiLang: String
+) : ConfigurableSource, HttpSource() {
 
     internal val preferences: SharedPreferences by getPreferencesLazy()
 
@@ -36,15 +39,13 @@ class Dokusho : ConfigurableSource, HttpSource() {
         "Dokusho$displayNameSuffix"
     }
 
-    override val lang = "all"
-
     override val baseUrl by lazy { preferences.getString(PREF_ADDRESS, "")!!.removeSuffix("/") }
 
     override val supportsLatest = true
 
-    // Generate unique ID based on source name
+    // Generate unique ID based on language
     override val id by lazy {
-        val key = "dokusho/all/$versionId"
+        val key = "dokusho/$lang/$versionId"
         val bytes = MessageDigest.getInstance("MD5").digest(key.toByteArray())
         (0..7).map { bytes[it].toLong() and 0xff shl 8 * (7 - it) }.reduce(Long::or) and Long.MAX_VALUE
     }
@@ -71,8 +72,17 @@ class Dokusho : ConfigurableSource, HttpSource() {
             .build()
 
     // Popular manga - sorted by most recently updated
-    override fun popularMangaRequest(page: Int): Request =
-        GET("$baseUrl/api/v1/serie?page=$page", headers)
+    override fun popularMangaRequest(page: Int): Request {
+        val url = "$baseUrl/api/v1/serie".toHttpUrlOrNull()!!.newBuilder()
+            .addQueryParameter("page", page.toString())
+            .apply {
+                if (apiLang.isNotBlank()) {
+                    addQueryParameter("language", apiLang)
+                }
+            }
+            .build()
+        return GET(url, headers)
+    }
 
     override fun popularMangaParse(response: Response): MangasPage {
         val result = response.parseAs<SerieListResponseDto>()
@@ -82,8 +92,17 @@ class Dokusho : ConfigurableSource, HttpSource() {
     }
 
     // Latest updates
-    override fun latestUpdatesRequest(page: Int): Request =
-        GET("$baseUrl/api/v1/serie?page=$page", headers)
+    override fun latestUpdatesRequest(page: Int): Request {
+        val url = "$baseUrl/api/v1/serie".toHttpUrlOrNull()!!.newBuilder()
+            .addQueryParameter("page", page.toString())
+            .apply {
+                if (apiLang.isNotBlank()) {
+                    addQueryParameter("language", apiLang)
+                }
+            }
+            .build()
+        return GET(url, headers)
+    }
 
     override fun latestUpdatesParse(response: Response): MangasPage =
         popularMangaParse(response)
@@ -95,6 +114,9 @@ class Dokusho : ConfigurableSource, HttpSource() {
             .apply {
                 if (query.isNotBlank()) {
                     addQueryParameter("q", query)
+                }
+                if (apiLang.isNotBlank()) {
+                    addQueryParameter("language", apiLang)
                 }
             }
             .build()
@@ -123,7 +145,14 @@ class Dokusho : ConfigurableSource, HttpSource() {
     // Chapter list
     override fun chapterListRequest(manga: SManga): Request {
         val serieId = manga.url.removePrefix("/api/v1/serie/")
-        return GET("$baseUrl/api/v1/serie/$serieId/chapters", headers)
+        val url = "$baseUrl/api/v1/serie/$serieId/chapters".toHttpUrlOrNull()!!.newBuilder()
+            .apply {
+                if (apiLang.isNotBlank()) {
+                    addQueryParameter("lang", apiLang)
+                }
+            }
+            .build()
+        return GET(url, headers)
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
